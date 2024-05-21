@@ -1,69 +1,88 @@
-# Chrome Dino Game
+## 크롬 공룡 게임 리팩토링
+#### 202001818 송강규
 
-![Preview](/preview.png)
-<br>
-<br>
+## 사용한 패턴
+#### 1. Singleton Pattern
+사용한 부분: 'GameState 클래스'
+이유: GameState 클래스는 게임의 상태를 관리하는 클래스이다. 게임 속도와 점수 같은 전역적으로 접근할 수 있는 상태를 유지하기 위해 싱글턴 패턴을 사용. 싱글턴 패턴은 클래스의 인스턴스를 하나만 생성하여 전역적으로 접근할 수 있도록 보장. 이를 통해 여러 객체가 동일한 게임 상태를 공유할 수 있다.
+```python
+class GameState:
+    _instance = None
 
-**Chrome Dinosaur Game** in **Python** using **Pygame**! 🦖
+    @staticmethod
+    def get_instance():
+        if GameState._instance is None:
+            GameState()
+        return GameState._instance
 
-It's the game you see in the Chrome Browser, when you're offline. 
+    def __init__(self):
+        if GameState._instance is not None:
+            raise Exception("This class is a singleton!")
+        else:
+            GameState._instance = self
+            self.game_speed = 10
+            self.points = 0
+```
 
-Made by [maxontech](https://twitter.com/max_on_tech)
+#### 2. State Pattern
+사용한 부분: 'State', 'RunningState', 'JumpingState', 'DuckingState' 클래스
+이유: 공룡의 상태(달리기, 점프, 웅크리기)를 관리하기 위해 상태 패턴을 사용. 상태 패턴을 사용하면 객체의 상태에 따라 행동을 변경할 수 있다. 이는 공룡의 상태가 변경될 때마다 상태별 행동(입력 처리 및 업데이트 로직)이 달라지는 것을 쉽게 관리할 수 있도록 한다.
+```python
+class State(ABC):
+    @abstractmethod
+    def handle_input(self, dinosaur, input):
+        pass
 
-## Table of contents
+    @abstractmethod
+    def update(self, dinosaur):
+        pass
 
-- [Description](#description)
-- [YouTube Tutorial](#youtube-tutorial)
-- [Installation](#installation)
-- [Controls](#controls)
-- [Libraries](#libraries)
-- [FAQ](#faq)
-- [Contact](#contact)
+class RunningState(State):
+    def handle_input(self, dinosaur, input):
+        if input[pygame.K_UP]:
+            dinosaur.set_state(JumpingState())
+        elif input[pygame.K_DOWN]:
+            dinosaur.set_state(DuckingState())
 
-## YouTube Videos
+    def update(self, dinosaur):
+        dinosaur.image = dinosaur.run_img[dinosaur.step_index // 5]
+        dinosaur.dino_rect.y = dinosaur.Y_POS
+        dinosaur.step_index = (dinosaur.step_index + 1) % 10
 
-1. [Python/Pygame Chrome Dino (Part 1) - Setup & Dino Animation](https://youtu.be/wnBGG7JLrkg?feature=shared)
-2. [Python/Pygame Chrome Dino (Part 2) -JUMPING & DUCKING Motion](https://youtu.be/aAkO8Pketkg?feature=shared)
-3. [Python/Pygame Chrome Dino (Part 3) - Score & Background](https://youtu.be/KbKMqxVw8x0?feature=shared)
-4. [Python/Pygame Chrome Dino (Part 4) - Obstacles and Collisions](https://youtu.be/LYvrb-1ntIE?feature=shared)
-5. [Python/Pygame Chrome Dino (Part 5) - Menu and Final Touches](https://youtu.be/xQ5UCzFKR58?feature=shared)
+class JumpingState(State):
+    def handle_input(self, dinosaur, input):
+        pass  # Jumping is handled by the state itself
 
-## Description
+    def update(self, dinosaur):
+        dinosaur.image = dinosaur.jump_img
+        dinosaur.dino_rect.y -= dinosaur.jump_vel * 4
+        dinosaur.jump_vel -= 0.8
+        if dinosaur.jump_vel < -dinosaur.JUMP_VEL:
+            dinosaur.set_state(RunningState())
+            dinosaur.jump_vel = dinosaur.JUMP_VEL
 
-This is a simple implementation of the Chrome Dinosaur Game using Python and Pygame. The game is a simple infinite runner where the player has to jump over cacti and avoid birds. 
-The game gets progressively harder as the player's score increases. See how far you can get!
+class DuckingState(State):
+    def handle_input(self, dinosaur, input):
+        if not input[pygame.K_DOWN]:
+            dinosaur.set_state(RunningState())
 
-## Installation
-Requirements: You must have Python installed and preferably a code editor like PyCharm.
+    def update(self, dinosaur):
+        dinosaur.image = dinosaur.duck_img[dinosaur.step_index // 5]
+        dinosaur.dino_rect.y = dinosaur.Y_POS_DUCK
+        dinosaur.step_index = (dinosaur.step_index + 1) % 10
+```
 
-1. Clone the repository 
-2. In the terminal, navigate to the directory where the repository was cloned, e.g., `C:\Users\Max\PycharmProjects\chrome-dinosaur`
-3. Create a virtual environment, activate it, and install pygame by running the following commands in the terminal:
-    ```bash
-    python -m venv venv #This creates a virtual environment
-    venv\Scripts\activate #This activates the virtual environment
-    pip install pygame #This installs the Pygame library
-    ```
-4. Run the game by running the following command in the terminal:
-    ```bash
-    python main.py
-    ```
-
-## Controls
-- Use the up arrow key or spacebar to jump.
-- Press any key to start the game.
-- When the game ends, press any key to restart.
-
-## Libraries
-
-- [pygame](https://www.pygame.org/news): Pygame is a cross-platform set of Python modules designed for writing video games.
-
-## FAQ
-- How to Open GitHub Projects in PyCharm? [Explained Here](https://youtu.be/cAnWazo5pFU)
-- How to use Virtual Environments? [Explained Here](https://youtu.be/2P30W3TN4nI)
-- How to install PyCharm and Python? [Explained Here](https://youtu.be/XsL8JDkH-ec)
-- How to set PyCharm Config. and Interpreter? [Explained Here](https://youtu.be/OajNS-WHiUI)
-
-## Contact
-
-Feel free to reach out to me [on Twitter](https://twitter.com/max_on_tech) if you have any questions or feedback! Hope you find this useful!
+#### 3.Factory Pattern
+사용한 부분: 'ObstacleFactory' 클래스
+이유: 장애물 객체를 생성할 때 팩토리 패턴을 사용. 팩토리 패턴은 객체 생성 로직을 캡슐화하여 클라이언트 코드와 객체 생성 코드를 분리한다. 이를 통해 장애물의 종류가 추가되거나 변경될 때 클라이언트 코드를 수정하지 않고도 쉽게 확장할 수 있다.
+```python
+class ObstacleFactory:
+    @staticmethod
+    def create_obstacle(obstacle_type):
+        if obstacle_type == 'small_cactus':
+            return SmallCactus(SMALL_CACTUS)
+        elif obstacle_type == 'large_cactus':
+            return LargeCactus(LARGE_CACTUS)
+        elif obstacle_type == 'bird':
+            return Bird(BIRD)
+```
