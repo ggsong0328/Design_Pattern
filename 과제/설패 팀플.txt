@@ -1,0 +1,169 @@
+설패 팀플
+
+결국 또 다시 패턴 3가지를 섞어서 프로그램을 만들어야 되는거잖아?
+
+가장 먼저 생각나는게 이제 뭔갈 분류하는 프로그램,
+간단한 캐릭터가 있는 게임,
+회사 관리 or 사원 관리 프로그램,
+
+결국 뭔갈 분류하는 프로그램이 편할거 같은데 그러면 이제 뭘 분류할거냐?
+내가 과제로 냈던건 웹 종류 분류 비스무리한건데 그건 좀 에바쎄바고...
+
+큰 틀이 있고, 그 안에 작은 틀, 그 안에 세부 이런게 좋을 거 같은데 으으으음..
+
+
+from abc import ABC, abstractmethod
+
+# Factory Method
+class FoodFactory(ABC):
+    @abstractmethod
+    def create_food(self, name):
+        pass
+
+# Concrete Food Factories
+class FastFoodFactory(FoodFactory):
+    def create_food(self, name):
+        return FastFood(name)
+
+class HealthyFoodFactory(FoodFactory):
+    def create_food(self, name):
+        return HealthyFood(name)
+
+# Products
+class Food(ABC):
+    def __init__(self, name):
+        self.name = name
+
+    @abstractmethod
+    def classify(self):
+        pass
+
+class FastFood(Food):
+    def classify(self):
+        print(f"{self.name} is classified as Fast Food.")
+
+class HealthyFood(Food):
+    def classify(self):
+        print(f"{self.name} is classified as Healthy Food.")
+
+# Strategy
+class ClassificationStrategy(ABC):
+    @abstractmethod
+    def classify_food(self, food):
+        pass
+
+# Concrete Strategies
+class FastFoodStrategy(ClassificationStrategy):
+    def classify_food(self, food):
+        if "burger" in food.name.lower() or "pizza" in food.name.lower():
+            return FastFoodFactory().create_food(food.name)
+        return None
+
+class HealthyFoodStrategy(ClassificationStrategy):
+    def classify_food(self, food):
+        if "salad" in food.name.lower() or "smoothie" in food.name.lower():
+            return HealthyFoodFactory().create_food(food.name)
+        return None
+
+# Chain of Responsibility
+class Classifier:
+    def __init__(self):
+        self.strategies = []
+
+    def add_strategy(self, strategy):
+        self.strategies.append(strategy)
+
+    def classify(self, food):
+        for strategy in self.strategies:
+            classified_food = strategy.classify_food(food)
+            if classified_food:
+                classified_food.classify()
+                return
+        print(f"Sorry, we couldn't classify '{food.name}'.")
+
+# Example Usage
+if __name__ == "__main__":
+    fast_food_strategy = FastFoodStrategy()
+    healthy_food_strategy = HealthyFoodStrategy()
+
+    classifier = Classifier()
+    classifier.add_strategy(fast_food_strategy)
+    classifier.add_strategy(healthy_food_strategy)
+
+    food_names = ["Cheeseburger", "Caesar Salad", "Smoothie", "Pasta"]
+
+    for name in food_names:
+        food = Food(name)
+        classifier.classify(food)
+
+
+음식 카테고리 분류 프로그램
+
+
+
+2. 사용자 등록 시스템
+from abc import ABC, abstractmethod
+
+# Prototype Pattern
+class UserPrototype(ABC):
+    @abstractmethod
+    def clone(self):
+        pass
+
+class User(UserPrototype):
+    def __init__(self, username, email):
+        self.username = username
+        self.email = email
+
+    def clone(self):
+        return User(self.username, self.email)
+
+# Builder Pattern
+class UserProfileBuilder:
+    def __init__(self):
+        self.username = None
+        self.email = None
+
+    def set_username(self, username):
+        self.username = username
+        return self
+
+    def set_email(self, email):
+        self.email = email
+        return self
+
+    def build(self):
+        return User(self.username, self.email)
+
+# Factory Method Pattern
+class UserFactory(ABC):
+    @abstractmethod
+    def create_user(self):
+        pass
+
+class RegularUserFactory(UserFactory):
+    def create_user(self):
+        builder = UserProfileBuilder()
+        return builder.set_username("RegularUser").build()
+
+class PremiumUserFactory(UserFactory):
+    def create_user(self):
+        builder = UserProfileBuilder()
+        return builder.set_username("PremiumUser").set_email("premium@example.com").build()
+
+# Example Usage
+if __name__ == "__main__":
+    regular_user_factory = RegularUserFactory()
+    premium_user_factory = PremiumUserFactory()
+
+    regular_user = regular_user_factory.create_user()
+    premium_user = premium_user_factory.create_user()
+
+    print("Regular User:", regular_user.username, regular_user.email)
+    print("Premium User:", premium_user.username, premium_user.email if premium_user.email else "No email")
+
+
+
+분류하는 프로그램으로 큰 틀을 잡은 이유:
+우리가 배운 설계패턴들 중에서 3가지 이상을 섞어야 되는 상황에서 가장 먼저 생각난 것이 어떤 물건이던 사람이던 분류하는 프로그램을 패턴들을 섞기에 편하다고 생각했다. 다른 아이디어로는 간단한 캐릭터들이 있는 게임도 생각을 해봤지만, 그러면 교수님이 알려준 예시를 너무 따라갈 거 같다고 느껴 분류하는 프로그램을 제작해보는게 좋겠다! 라고 생각했다. 
+
