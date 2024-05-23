@@ -200,6 +200,7 @@ def main():
     player = Dinosaur()
     cloud = Cloud()
     game_state = GameState.get_instance()
+    game_state.points = 0  # 점수를 초기화
     x_pos_bg = 0
     y_pos_bg = 380
     obstacles = []
@@ -268,14 +269,13 @@ def menu(death_count):
 
         if death_count == 0:
             text = font.render("Press any Key to Start", True, (0, 0, 0))
+            game_state.points = 0  # 새로운 게임 시작 시 점수 초기화
         else:
             text = font.render("Press any Key to Restart", True, (0, 0, 0))
             score_text = font.render("Your Score: " + str(game_state.points), True, (0, 0, 0))
             scoreRect = score_text.get_rect()
             scoreRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50)
             SCREEN.blit(score_text, scoreRect)
-            if death_count >= 1:
-                game_state.points = 0
 
         textRect = text.get_rect()
         textRect.center = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
